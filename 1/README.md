@@ -1,4 +1,4 @@
-# 1
+# Day 1: Trebuchet?!
 
 To install dependencies:
 
