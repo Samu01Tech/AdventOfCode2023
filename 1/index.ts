@@ -27,7 +27,6 @@ const buildNumber = (digits: number[]): number => {
  * @returns The converted string with numeric digits.
  */
 const convertStringsToNumbers = (line: string): string => {
-  console.log(line);
   let newLine = "";
   for (let j = 0; j < line.length; j++) {
     if (line[j] === "o" && line[j + 1] === "n" && line[j + 2] === "e") {
@@ -106,19 +105,18 @@ const convertStringsToNumbers = (line: string): string => {
 };
 
 // get the input data
-const data = await Bun.file("input.txt").text();
+const data = await Bun.file("ettore.txt").text();
 const lines = data.split("\n");
 
 // parse the input data
 const convertedLines = lines.map((line) => convertStringsToNumbers(line));
+// console.log(convertedLines);
 const numbers = convertedLines.map((line) =>
   Array.from(line).map((c) => parseInt(c, 10))
 );
 const filteredNumbers = numbers.map((line) => line.filter((n) => !isNaN(n)));
 
 // build the result
-const result = filteredNumbers
-  .map((line) => buildNumber(line))
-  .reduce((a, b) => a + b);
+const result = filteredNumbers.map((line) => buildNumber(line));
 
 console.log(result);
