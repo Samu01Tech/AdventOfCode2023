@@ -1,17 +1,9 @@
+import { showGraph } from "./showGraph";
+import { Extraction, Game } from "./types";
+
 const RED_LIMIT = 12;
 const GREEN_LIMIT = 13;
 const BLUE_LIMIT = 14;
-
-interface Game {
-  id: number;
-  extractions: Extraction[];
-}
-
-interface Extraction {
-  r: number;
-  g: number;
-  b: number;
-}
 
 /**
  * Parses the extraction string and returns an array of Extraction objects.
@@ -99,3 +91,6 @@ for (const game of games) {
 
 console.log("First Star:", idSum);
 console.log("Second Star:", mulSum);
+
+// write a chart.js config to show the games variable in a chart
+showGraph(games);
