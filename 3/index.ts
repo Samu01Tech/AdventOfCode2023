@@ -1,128 +1,182 @@
-type Matrix = Array<Array<string | number>>;
+import { TracingChannel } from "diagnostics_channel";
 
 const data = await Bun.file("input.txt").text();
 const lines = data.split("\n");
-const matrix = lines.map((line) =>
-  line.split("").map((char) => {
-    if (char === "0") return 0;
-    if (parseInt(char)) return parseInt(char);
-    return char;
-  })
-);
+const matrix = lines.map((line) => line.split(""));
 
-const isEqualToSymbol = (input: string | number) => {
-  // return true if input is different from number and "."
-  if (typeof input === "number") return false;
-  if (input === ".") return false;
-  return true;
+interface Number {
+  value: string;
+  i: number;
+  j: number;
+  hasSymbolNear: boolean;
+}
+
+const isNumber = (input: string): boolean => {
+  return !isNaN(parseInt(input));
 };
 
-const hasSymbolNear = (matrix: Matrix, i: number, j: number): boolean => {
-  if (matrix[i][j + 1] !== undefined) {
-    const right = matrix[i][j + 1];
+const isDot = (input: string): boolean => {
+  return input === ".";
+};
 
-    if (isEqualToSymbol(right)) {
-      return true;
-    }
-  }
-
-  if (matrix[i][j - 1] !== undefined) {
-    const left = matrix[i][j - 1];
-
-    if (isEqualToSymbol(left)) {
-      return true;
-    }
-  }
-
+const symbolNear = (matrix: string[][], i: number, j: number): boolean => {
+  const sorrounding = [];
   if (matrix[i - 1] !== undefined) {
-    const topLeft = matrix[i - 1][j - 1];
-    const top = matrix[i - 1][j];
-    const topRight = matrix[i - 1][j + 1];
-
-    if (isEqualToSymbol(topLeft)) {
-      return true;
-    }
-
-    if (isEqualToSymbol(top)) {
-      return true;
-    }
-
-    if (isEqualToSymbol(topRight)) {
-      return true;
-    }
+    sorrounding.push(matrix[i - 1][j]);
+    if (matrix[i - 1][j - 1]) sorrounding.push(matrix[i - 1][j - 1]);
+    if (matrix[i - 1][j + 1]) sorrounding.push(matrix[i - 1][j + 1]);
   }
-
   if (matrix[i + 1] !== undefined) {
-    const bottomLeft = matrix[i + 1][j - 1];
-    const bottom = matrix[i + 1][j];
-    const bottomRight = matrix[i + 1][j + 1];
-
-    if (isEqualToSymbol(bottomLeft)) {
-      return true;
-    }
-
-    if (isEqualToSymbol(bottom)) {
-      return true;
-    }
-
-    if (isEqualToSymbol(bottomRight)) {
-      return true;
-    }
+    sorrounding.push(matrix[i + 1][j]);
+    if (matrix[i + 1][j - 1]) sorrounding.push(matrix[i + 1][j - 1]);
+    if (matrix[i + 1][j + 1]) sorrounding.push(matrix[i + 1][j + 1]);
+  }
+  if (matrix[i][j - 1]) {
+    sorrounding.push(matrix[i][j - 1]);
+  }
+  if (matrix[i][j + 1]) {
+    sorrounding.push(matrix[i][j + 1]);
   }
 
-  return false;
-};
-
-const buildNumber = (matrix: Matrix, i: number, j: number) => {
-  let peekPosition = j;
-  let number = "";
-  while (
-    matrix[i][peekPosition] !== "." &&
-    !isEqualToSymbol(matrix[i][peekPosition])
-  ) {
-    const char = matrix[i][peekPosition].toString();
-    number += char;
-    peekPosition++;
-  }
-  return number;
+  return sorrounding.some((char) => !isNumber(char) && !isDot(char));
 };
 
 let numbers = [];
 for (let i = 0; i < matrix.length; i++) {
   const line = matrix[i];
+  let number: Number = {
+    value: "",
+    i: 0,
+    j: 0,
+    hasSymbolNear: false,
+  };
   for (let j = 0; j < line.length; j++) {
     const char = line[j];
-    if (typeof char === "number") {
-      const res = hasSymbolNear(matrix, i, j);
-      if (res) {
-        // has symbol near
-        let number = buildNumber(matrix, i, j);
+    if (isNumber(char)) {
+      number.value += char;
+      number.i = i;
+      number.j = j;
+      if (!number.hasSymbolNear)
+        number.hasSymbolNear = symbolNear(matrix, i, j);
+    }
+    if (
+      j + 1 === line.length ||
+      ((isDot(char) || !isNumber(char)) && number.value.length > 0)
+    ) {
+      if (number.hasSymbolNear) {
         numbers.push(number);
-        j += number.length;
-      } else {
-        // no symbol near
-        let peekPosition = j + 1;
-        let hasSymbolAfter = false;
-        while (typeof matrix[i][peekPosition] === "number") {
-          if (matrix[i][peekPosition] === ".") break;
-          if (hasSymbolNear(matrix, i, peekPosition)) {
-            hasSymbolAfter = true;
-            let number = buildNumber(matrix, i, j);
-            numbers.push(number);
-            j += number.length;
-            break;
-          }
-          peekPosition++;
-        }
+      }
+      number = {
+        value: "",
+        i: 0,
+        j: 0,
+        hasSymbolNear: false,
+      };
+    }
+  }
+}
+
+const partsNumber = numbers.reduce((a, b) => a + parseInt(b.value), 0);
+console.log("partsNumber", partsNumber);
+
+const buildNumber = (
+  matrix: string[][],
+  i: number,
+  j: number,
+  mode: string
+) => {
+  let number: string = "";
+  let number2: string = "";
+
+  if (mode === "top") {
+    let x = j - 1;
+    let y = i - 1;
+    while (isNumber(matrix[y][x])) {
+      x--;
+    }
+    x++;
+    if (!isNumber(matrix[y][x])) x++;
+    while (isNumber(matrix[y][x])) {
+      number += matrix[y][x];
+      matrix[y][x] = ".";
+      x++;
+    }
+    if (matrix[y][x] === "." && matrix[y + 1][x] === "*") x++;
+    while (isNumber(matrix[y][x])) {
+      number2 += matrix[y][x];
+      matrix[y][x] = ".";
+      x++;
+    }
+  } else if (mode === "bottom") {
+    let x = j - 1;
+    let y = i + 1;
+    while (isNumber(matrix[y][x])) {
+      x--;
+    }
+    x++;
+    if (!isNumber(matrix[y][x])) x++;
+    while (isNumber(matrix[y][x])) {
+      number += matrix[y][x];
+      matrix[y][x] = ".";
+      x++;
+    }
+    if (matrix[y][x] === "." && matrix[y - 1][x] === "*") x++;
+    while (isNumber(matrix[y][x])) {
+      number2 += matrix[y][x];
+      matrix[y][x] = ".";
+      x++;
+    }
+  } else if (mode === "left") {
+    let x = j - 1;
+    let y = i;
+    while (isNumber(matrix[y][x])) {
+      x--;
+    }
+    x++;
+    if (!isNumber(matrix[y][x]) && matrix[y][x] !== "*") x++;
+    while (isNumber(matrix[y][x])) {
+      number += matrix[y][x];
+      matrix[y][x] = ".";
+      x++;
+    }
+  } else if (mode === "right") {
+    let x = j + 1;
+    let y = i;
+    while (isNumber(matrix[y][x])) {
+      number += matrix[y][x];
+      matrix[y][x] = ".";
+      x++;
+    }
+  }
+
+  return [number, number2];
+};
+
+let gearRatiosSum = 0;
+let num: number = 0;
+for (let i = 1; i < matrix.length - 1; i++) {
+  const line = matrix[i];
+  for (let j = 1; j < line.length - 1; j++) {
+    const char = line[j];
+    if (char === "*") {
+      const top = buildNumber(matrix, i, j, "top");
+      const bottom = buildNumber(matrix, i, j, "bottom");
+      const left = buildNumber(matrix, i, j, "left");
+      const right = buildNumber(matrix, i, j, "right");
+      const numberiBelli = [top, bottom, left, right]
+        .flat()
+        .map((n) => parseInt(n))
+        .filter((n) => !isNaN(n));
+
+      if (numberiBelli.length > 1) {
+        matrix[i][j] = ".";
+      }
+      if (numberiBelli.length === 2) {
+        gearRatiosSum += numberiBelli[0] * numberiBelli[1];
+        num++;
       }
     }
   }
 }
 
-console.log(numbers.reduce((acc, curr) => acc + parseInt(curr), 0));
-console.log(numbers);
-
-const data2 = await Bun.file("input.txt").text();
-const lines2 = data2.split("\n");
-const grid = lines2.map((line) => line.split("."));
-console.log(grid);
+console.log("gearRatiosSum", gearRatiosSum);

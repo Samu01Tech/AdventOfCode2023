@@ -1,4 +1,4 @@
-# 3
+# Day 3: Gear Ratios
 
 To install dependencies:
 
