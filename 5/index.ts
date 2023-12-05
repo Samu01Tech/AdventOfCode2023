@@ -1,5 +1,3 @@
-var Parallel = require("paralleljs");
-
 interface Range {
   destinationRangeStart: number;
   sourceRangeStart: number;
@@ -80,18 +78,13 @@ for (let seed of seeds) {
 
 // console.log("Minimum location", formatter.format(Math.min(...newSeeds)));
 
-function getMinFromSeed({
-  seed,
-  lenght,
-  i,
-}: {
-  seed: number;
-  lenght: number;
-  i: number;
-}) {
-  let minNumber: number = Number.MAX_SAFE_INTEGER;
+console.time("Part 2");
+let minNumber: number = Number.MAX_SAFE_INTEGER;
+for (let i = 0; i < seeds.length; i += 2) {
   console.log((i / seeds.length) * 100, "%");
-  for (let newSeedOffset = 0; newSeedOffset < lenght; newSeedOffset++) {
+  let seed = seeds[i];
+  const length = seeds[i + 1];
+  for (let newSeedOffset = 0; newSeedOffset < length; newSeedOffset++) {
     let currentInitialSeed = seed + newSeedOffset;
     let currentSeed = currentInitialSeed;
     let tmpSeed = 0;
@@ -129,30 +122,6 @@ function getMinFromSeed({
   }
 }
 
-console.time("Part 2");
-const minimums = [];
-var parallel = new Parallel();
-for (let i = 0; i < seeds.length; i += 2) {
-  minimums.push(
-    parallel
-      .spawn(
-        ({ seed, lenght, i }: { seed: number; lenght: number; i: number }) => {
-          return getMinFromSeed({ seed, lenght, i });
-        }
-      )
-      .then(() => {
-        console.log("Done", i);
-      })
-  );
-}
-
-const results = await Promise.all(minimums);
-let minNumber = Number.MAX_SAFE_INTEGER;
-for (const result of results) {
-  if (result < minNumber) {
-    minNumber = result;
-  }
-}
 console.log("Minimum location", minNumber);
 console.timeEnd("Part 2");
 
