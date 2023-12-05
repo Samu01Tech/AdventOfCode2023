@@ -1,3 +1,5 @@
+var Parallel = require("paralleljs");
+
 interface Range {
   destinationRangeStart: number;
   sourceRangeStart: number;
@@ -74,52 +76,84 @@ for (let seed of seeds) {
     }
   }
   newSeeds.push(seed);
-  console.log("---");
 }
 
-console.log("Minimum location", formatter.format(Math.min(...newSeeds)));
+// console.log("Minimum location", formatter.format(Math.min(...newSeeds)));
 
-const seeds2 = [];
-for (let i = 0; i < seeds.length; i += 2) {
-  console.log(i);
-  const seed = seeds[i];
-  const length = seeds[i + 1];
-  for (let j = 0; j < length; j++) {
-    seeds2.push(seed + j);
+function getMinFromSeed({
+  seed,
+  lenght,
+  i,
+}: {
+  seed: number;
+  lenght: number;
+  i: number;
+}) {
+  let minNumber: number = Number.MAX_SAFE_INTEGER;
+  console.log((i / seeds.length) * 100, "%");
+  for (let newSeedOffset = 0; newSeedOffset < lenght; newSeedOffset++) {
+    let currentInitialSeed = seed + newSeedOffset;
+    let currentSeed = currentInitialSeed;
+    let tmpSeed = 0;
+    for (const map of maps) {
+      for (const range of map.ranges) {
+        if (
+          currentSeed >= range.sourceRangeStart &&
+          currentSeed <= range.sourceRangeStart + range.rangeLength
+        ) {
+          tmpSeed =
+            range.destinationRangeStart +
+            (currentSeed - range.sourceRangeStart);
+          // console.log(
+          //   "[",
+          //   seed,
+          //   "]",
+          //   map.name,
+          //   "|",
+          //   currentSeed,
+          //   "->",
+          //   tmpSeed
+          // );
+          break;
+        }
+      }
+      currentSeed = tmpSeed;
+    }
+    if (tmpSeed < minNumber) {
+      minNumber = tmpSeed;
+    }
+
+    tmpSeed = 0;
+    // console.log("^", seed, "+", newSeedOffset, "=", currentInitialSeed);
+    // console.log("---");
   }
 }
 
 console.time("Part 2");
-// let newSeeds2 = [];
-console.log("Seeds2 lenght:", seeds2.length);
-// let iteration = 0;
-// for (let seed of seeds2) {
-//   iteration++;
-//   if (iteration % 100 === 0) {
-//     console.log("Elaborazione:", seed / seeds2.length, "%");
-//   }
-//   for (const map of maps) {
-//     for (const range of map.ranges) {
-//       if (
-//         seed >= range.sourceRangeStart &&
-//         seed <= range.sourceRangeStart + range.rangeLength
-//       ) {
-//         // console.log(
-//         //   "Seed",
-//         //   seed,
-//         //   "Map",
-//         //   map.name,
-//         //   "Destination",
-//         //   range.destinationRangeStart + (seed - range.sourceRangeStart)
-//         // );
-//         seed = range.destinationRangeStart + (seed - range.sourceRangeStart);
-//         break;
-//       }
-//     }
-//   }
-//   newSeeds2.push(seed);
-//   // console.log("---");
-// }
-// console.timeEnd("Part 2");
+const minimums = [];
+var parallel = new Parallel();
+for (let i = 0; i < seeds.length; i += 2) {
+  minimums.push(
+    parallel
+      .spawn(
+        ({ seed, lenght, i }: { seed: number; lenght: number; i: number }) => {
+          return getMinFromSeed({ seed, lenght, i });
+        }
+      )
+      .then(() => {
+        console.log("Done", i);
+      })
+  );
+}
+
+const results = await Promise.all(minimums);
+let minNumber = Number.MAX_SAFE_INTEGER;
+for (const result of results) {
+  if (result < minNumber) {
+    minNumber = result;
+  }
+}
+console.log("Minimum location", minNumber);
+console.timeEnd("Part 2");
 
 // console.log("Minimum location", formatter.format(Math.min(...newSeeds2)));
