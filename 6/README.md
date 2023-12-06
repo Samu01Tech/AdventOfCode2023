@@ -1,4 +1,4 @@
-# 6
+# Day 6: Wait For It
 
 To install dependencies:
 
