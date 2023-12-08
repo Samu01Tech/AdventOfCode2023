@@ -102,6 +102,7 @@ export function getStrengthOfHand2(hand: string): Strength {
         .sort((a, b) => b[1] - a[1])
         .filter((a) => a[0] !== "J")
     );
+    console.log(mapsOfCardsSorted);
     const valueOfJ = mapOfCards.get("J") ?? 0;
     const highestKey = mapsOfCardsSorted.keys().next().value ?? "";
     const highestValue = mapsOfCardsSorted.get(highestKey) ?? 0;
